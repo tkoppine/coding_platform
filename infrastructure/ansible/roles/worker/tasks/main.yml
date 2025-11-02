@@ -1,0 +1,11 @@
+- name: Run worker container
+  docker_container:
+    name: worker
+    image: tkoppine/worker:latest
+    state: started
+    pull: true 
+    restart_policy: always
+    env:
+      QUEUE_URL: "{{ sqs_request_url }}"
+      RESULT_URL: "{{ sqs_response_url }}"
+      BUCKET_NAME: "{{ s3_bucket_name }}"

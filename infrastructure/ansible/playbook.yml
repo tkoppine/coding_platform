@@ -1,0 +1,22 @@
+- hosts: backend
+  become: true
+  vars_files:
+    - secrets.yml
+    - secrets.auto.yml
+  roles:
+    - backend
+
+- hosts: worker
+  become: true
+  vars_files:
+    - secrets.yml
+    - secrets.auto.yml
+  roles:
+    - worker
+
+- hosts: frontend
+  become: true
+  vars_files:
+    - secrets.auto.yml
+  roles:
+    - frontend

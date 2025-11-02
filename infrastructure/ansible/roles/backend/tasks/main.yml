@@ -1,0 +1,16 @@
+- name: Run backend container
+  docker_container:
+    name: backend
+    image: tkoppine/backend:latest
+    state: started
+    pull: true 
+    ports:
+      - "8080:8080"
+    restart_policy: always
+    env:
+      DB_URL: "jdbc:postgresql://{{ db_endpoint }}/codingtest"
+      DB_USERNAME: "{{ db_credentials.username }}"
+      DB_PASSWORD: "{{ db_credentials.password }}"
+      QUEUE_URL: "{{ sqs_request_url }}"
+      RESULT_URL: "{{ sqs_response_url }}"
+      BUCKET_NAME: "{{ s3_bucket_name }}"

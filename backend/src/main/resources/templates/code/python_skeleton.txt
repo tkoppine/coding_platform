@@ -1,0 +1,5 @@
+# user code
+<<<SIGNATURE_PLACEHOLDER>>>
+
+if __name__ == "__main__":
+<<<TEST_CASES_PLACEHOLDER>>>
