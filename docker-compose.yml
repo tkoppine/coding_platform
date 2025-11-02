@@ -17,18 +17,6 @@ services:
       - coding-platform-network
     restart: unless-stopped
 
-  # Redis for caching and session management
-  redis:
-    image: redis:7-alpine
-    container_name: coding-platform-redis
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - coding-platform-network
-    restart: unless-stopped
-
   # Backend Service
   backend:
     build: 
@@ -38,10 +26,10 @@ services:
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-docker}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-coding_platform}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-admin}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-changeme_dev_password}
+      # Database Configuration
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-coding_platform}
+      DB_USERNAME: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme_dev_password}
       
       # AWS Configuration (use environment variables)
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
@@ -49,15 +37,14 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-1}
       
       # SQS Configuration (use environment variables)
-      SQS_REQUEST_URL: ${SQS_REQUEST_URL}
-      SQS_RESPONSE_URL: ${SQS_RESPONSE_URL}
+      QUEUE_URL: ${SQS_REQUEST_URL}
+      RESULT_URL: ${SQS_RESPONSE_URL}
       
       # S3 Configuration (use environment variables)
-      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      BUCKET_NAME: ${S3_BUCKET_NAME}
       
     depends_on:
       - postgres
-      - redis
     networks:
       - coding-platform-network
     restart: unless-stopped
@@ -71,22 +58,18 @@ services:
     ports:
       - "${WORKER_PORT:-8081}:8081"
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-docker}
-      
       # AWS Configuration (use environment variables)
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       
       # SQS Configuration (use environment variables)
-      SQS_REQUEST_URL: ${SQS_REQUEST_URL}
-      SQS_RESPONSE_URL: ${SQS_RESPONSE_URL}
+      QUEUE_URL: ${SQS_REQUEST_URL}
+      RESULT_URL: ${SQS_RESPONSE_URL}
       
       # S3 Configuration (use environment variables)
-      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      BUCKET_NAME: ${S3_BUCKET_NAME}
       
-    depends_on:
-      - redis
     networks:
       - coding-platform-network
     restart: unless-stopped
@@ -122,44 +105,7 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   coding-platform-network:
     driver: bridge
-
-# ================================
-# ENVIRONMENT CONFIGURATION
-# ================================
-# Create a .env file in the project root with the following variables:
-#
-# # Database Configuration
-# DB_NAME=coding_platform
-# DB_USER=admin
-# DB_PASSWORD=your_secure_password
-# DB_PORT=5432
-#
-# # Service Ports
-# BACKEND_PORT=8080
-# WORKER_PORT=8081
-# FRONTEND_PORT=3000
-# REDIS_PORT=6379
-#
-# # Spring Profile
-# SPRING_PROFILE=docker
-#
-# # AWS Configuration
-# AWS_ACCESS_KEY_ID=your_aws_access_key
-# AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-# AWS_REGION=us-east-1
-#
-# # SQS Configuration
-# SQS_REQUEST_URL=https://sqs.us-east-1.amazonaws.com/123456789012/your-request-queue
-# SQS_RESPONSE_URL=https://sqs.us-east-1.amazonaws.com/123456789012/your-response-queue
-#
-# # S3 Configuration
-# S3_BUCKET_NAME=your-code-submission-bucket
-#
-# # Frontend Configuration
-# NEXT_PUBLIC_API_URL=http://localhost:8080
-# NEXT_PUBLIC_WORKER_URL=http://localhost:8081
