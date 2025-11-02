@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: coding-platform-db
+    environment:
+      POSTGRES_DB: coding_platform
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - coding-platform-network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: coding-platform-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - coding-platform-network
+
+  # Backend Service
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: coding-platform-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/coding_platform
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      WORKER_SERVICE_URL: http://worker:8081
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - coding-platform-network
+    restart: unless-stopped
+
+  # Worker Service
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: coding-platform-worker
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      - redis
+    networks:
+      - coding-platform-network
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: coding-platform-frontend
+    ports:
+      - "3000:80"
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+    depends_on:
+      - backend
+    networks:
+      - coding-platform-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  coding-platform-network:
+    driver: bridge
