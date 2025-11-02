@@ -203,3 +203,32 @@ yarn-error.log*
 # CUSTOM PROJECT FILES
 # ================================
 # Add any project-specific files here
+
+# ================================
+# SECURITY & SENSITIVE FILES
+# ================================
+# Ansible vault password files
+.vault_pass
+.vault_password
+vault_password
+
+# Environment configuration files with actual values
+secrets.auto.yml.real
+secrets.real.yml
+**/secrets/*.yml
+**/secrets/*.yaml
+
+# AWS credentials and configuration
+.aws/credentials
+.aws/config
+
+# SSH keys and certificates
+*.pem
+*.key
+!*.key.example
+ansible/keys/
+infrastructure/keys/
+
+# Production environment files
+.env.production.local
+.env.staging.local

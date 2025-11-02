@@ -8,52 +8,176 @@
 [![React](https://img.shields.io/badge/React-18+-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Docker](https://img.shields.io/badge/Docker-20+-0db7ed?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 
+## ⚠️ Architecture Notice
+
+**Current Implementation:** This platform currently implements an AWS-based architecture with SQS queues and S3 storage, designed for coding assessment workflows.
+
+**Future Vision:** The enhanced architecture described in this README represents the planned evolution toward a full-featured IDE platform with real-time collaboration capabilities.
+
 ## 🏗️ System Architecture
+
+### Current Implementation (AWS-Based)
+
+Based on the existing codebase, this platform uses an AWS-based architecture with the following components:
+
+```mermaid
+graph TB
+    subgraph "User Interface"
+        FE[Frontend Server<br/>Candidate Page]
+    end
+
+    subgraph "AWS Cloud Services"
+        S3[S3 Bucket<br/>Code Storage]
+        SQS_REQ[SQS Request Queue<br/>Code Submissions]
+        SQS_RESP[SQS Response Queue<br/>Execution Results]
+    end
+
+    subgraph "Backend Services"
+        BE[Backend Server<br/>Questions Controller<br/>Submission Controller<br/>Results Controller]
+        WS[Worker Service<br/>Code Execution<br/>Docker Containers]
+    end
+
+    subgraph "Data Storage"
+        DB[(PostgreSQL<br/>Questions & Results)]
+    end
+
+    %% Current Flow
+    FE -->|Get Coding Questions| BE
+    FE -->|Code Submission Request| BE
+    BE -->|Send Code File| S3
+    BE -->|Send Submission Request| SQS_REQ
+    WS -->|Get Submission Request| SQS_REQ
+    WS -->|Get File Code File| S3
+    WS -->|Send Results| SQS_RESP
+    BE -->|Get Results| SQS_RESP
+    BE -->|Store Test Results| DB
+    BE -->|Get Test Results| DB
+    BE -->|Send Results| FE
+
+    %% Styling
+    style FE fill:#61DAFB
+    style BE fill:#6DB33F
+    style WS fill:#FF6B6B
+    style S3 fill:#FF9900
+    style SQS_REQ fill:#FF9900
+    style SQS_RESP fill:#FF9900
+    style DB fill:#336791
+```
+
+### 🔄 Current Workflow
+
+1. **User Interaction**: Candidate accesses the frontend page to get coding questions
+2. **Question Retrieval**: Backend serves coding questions from PostgreSQL database
+3. **Code Submission**: User submits code through the frontend
+4. **File Storage**: Backend stores code files in S3 bucket
+5. **Queue Processing**: Submission request is sent to SQS request queue
+6. **Code Execution**: Worker service picks up requests from SQS queue
+7. **File Retrieval**: Worker gets code file from S3 for execution
+8. **Result Processing**: Worker executes code in Docker containers and sends results to SQS response queue
+9. **Result Storage**: Backend retrieves results from SQS response queue and stores in database
+10. **Result Display**: Frontend displays execution results to the user
+
+### 🚀 Future Scope: Enhanced Architecture
+
+_The following represents the planned evolution of the system architecture for better scalability and user experience:_
 
 ```mermaid
 graph TB
     subgraph "Frontend Layer"
-        UI[React TypeScript UI]
-        WS[WebSocket Client]
+        UI[React TypeScript UI<br/>🎨 Web IDE Interface]
+        MOBILE[Mobile App<br/>📱 React Native]
     end
 
-    subgraph "API Gateway"
-        LB[Load Balancer/Nginx]
+    subgraph "API Gateway & Load Balancing"
+        LB[Load Balancer/Nginx<br/>🔀 Traffic Distribution]
+        API_GW[API Gateway<br/>🚪 Request Routing]
     end
 
-    subgraph "Microservices"
-        API[Backend API<br/>Spring Boot]
-        WORKER[Worker Service<br/>Code Execution]
+    subgraph "Microservices Layer"
+        AUTH[Auth Service<br/>🔐 JWT & OAuth]
+        USER[User Service<br/>👥 Profile Management]
+        PROJECT[Project Service<br/>📁 Project CRUD]
+        COLLAB[Collaboration Service<br/>🤝 Real-time Sync]
+        EXEC[Execution Service<br/>⚡ Code Runner]
+    end
+
+    subgraph "Message Queue System"
+        REDIS_Q[Redis Queue<br/>📬 Job Processing]
+        KAFKA[Apache Kafka<br/>🔄 Event Streaming]
     end
 
     subgraph "Data Layer"
-        DB[(PostgreSQL<br/>Database)]
-        CACHE[(Redis<br/>Cache)]
-        QUEUE[Redis Queue]
+        POSTGRES[(PostgreSQL<br/>📊 Primary Database)]
+        REDIS[(Redis<br/>🔴 Cache & Sessions)]
+        MONGO[(MongoDB<br/>📄 File Metadata)]
+        S3_NEW[S3 Storage<br/>☁️ File Storage]
     end
 
-    subgraph "Infrastructure"
-        TF[Terraform<br/>IaC]
-        AN[Ansible<br/>Configuration]
+    subgraph "Infrastructure & Monitoring"
+        K8S[Kubernetes<br/>☸️ Container Orchestration]
+        PROM[Prometheus<br/>📈 Metrics]
+        GRAF[Grafana<br/>📊 Monitoring]
+        ELK[ELK Stack<br/>📋 Logging]
     end
 
+    %% Enhanced Flow
     UI --> LB
-    WS --> LB
-    LB --> API
-    LB --> WORKER
-    API --> DB
-    API --> CACHE
-    WORKER --> QUEUE
-    WORKER --> CACHE
+    MOBILE --> LB
+    LB --> API_GW
+    API_GW --> AUTH
+    API_GW --> USER
+    API_GW --> PROJECT
+    API_GW --> COLLAB
+    API_GW --> EXEC
 
-    style UI fill:#61DAFB
-    style API fill:#6DB33F
-    style WORKER fill:#FF6B6B
-    style DB fill:#336791
-    style CACHE fill:#DC382D
+    AUTH --> REDIS
+    USER --> POSTGRES
+    PROJECT --> POSTGRES
+    PROJECT --> MONGO
+    PROJECT --> S3_NEW
+    COLLAB --> REDIS_Q
+    COLLAB --> KAFKA
+    EXEC --> REDIS_Q
+
+    %% Styling for future scope
+    style UI fill:#E3F2FD
+    style MOBILE fill:#E3F2FD
+    style AUTH fill:#E8F5E8
+    style USER fill:#E8F5E8
+    style PROJECT fill:#E8F5E8
+    style COLLAB fill:#E8F5E8
+    style EXEC fill:#FFE8E8
 ```
 
-## 📁 Project Structure
+### 🎯 Planned Enhancements
+
+#### Phase 1: Real-time Collaboration
+
+- WebSocket integration for live code sharing
+- Real-time cursor tracking and user presence
+- Collaborative editing with conflict resolution
+- Live chat and commenting system
+
+#### Phase 2: Enhanced Development Environment
+
+- Multiple file support and project structure
+- Integrated terminal and package management
+- Git integration with version control
+- Code completion and IntelliSense
+
+#### Phase 3: Advanced Features
+
+- AI-powered code suggestions and debugging
+- Code review and peer programming tools
+- Performance analytics and optimization tips
+- Integration with popular development tools
+
+#### Phase 4: Enterprise & Scalability
+
+- Multi-tenant architecture
+- Advanced security and compliance features
+- Auto-scaling based on demand
+- Global CDN and edge computing## 📁 Project Structure
 
 ```
 coding-platform/
@@ -216,6 +340,15 @@ Before you begin, ensure you have the following installed:
 - **Maven** (v3.8 or higher) - [Download](https://maven.apache.org/)
 - **Docker** & **Docker Compose** - [Download](https://docs.docker.com/get-docker/)
 - **Git** - [Download](https://git-scm.com/)
+
+### 🔒 Security Configuration Required
+
+**IMPORTANT:** Before running the application, you must configure sensitive information:
+
+1. **Review the [Security Configuration Guide](infrastructure/SECURITY_CONFIG.md)**
+2. **Update placeholder values** in `infrastructure/ansible/secrets.auto.yml`
+3. **Configure environment variables** for database connections
+4. **Set up AWS credentials** if using cloud deployment
 
 ### 🎯 One-Command Setup
 
@@ -459,6 +592,19 @@ docker stats
 ```
 
 ## 🔒 Security Features
+
+### ⚠️ Important Security Notice
+
+**This repository contains placeholder values for sensitive configuration.** Before deploying to any environment, please review and update all security-related configurations.
+
+**📋 Security Checklist:**
+
+- [ ] Replace all placeholder values in `infrastructure/ansible/secrets.auto.yml`
+- [ ] Configure Ansible Vault for `infrastructure/ansible/secrets.yml`
+- [ ] Update Terraform configuration with your actual resource names
+- [ ] Set up proper IAM roles and policies
+- [ ] Configure environment variables for all services
+- [ ] Review the [Security Configuration Guide](infrastructure/SECURITY_CONFIG.md)
 
 ### Authentication & Authorization
 

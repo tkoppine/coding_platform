@@ -18,7 +18,7 @@ resource "aws_key_pair" "main" {
 
 resource "local_file" "ansible_ssh_key" {
   content          = tls_private_key.main.private_key_pem
-  filename         = "/Users/tejanaidu/ansible/keys/ansible-key.pem"
+  filename         = "/path/to/your/ansible/keys/ansible-key.pem"  # UPDATE THIS PATH
   file_permission  = "0400"
 }
 
@@ -222,27 +222,27 @@ resource "aws_instance" "worker" {
 ############################
 
 resource "aws_s3_bucket" "submission" {
-  bucket = "candidate-code-submission"
+  bucket = "your-code-submission-bucket"  # UPDATE: Replace with your unique bucket name
 }
 
 resource "aws_sqs_queue" "request" {
-  name = "code-submission-request"
+  name = "your-submission-request-queue"  # UPDATE: Replace with your queue name
   max_message_size = 1048576
 }
 
 resource "aws_sqs_queue" "response" {
-  name = "code-results-response"
+  name = "your-results-response-queue"  # UPDATE: Replace with your queue name
   max_message_size = 1048576
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier             = "coding-questions-db"
+  identifier             = "your-coding-platform-db"  # UPDATE: Replace with your DB identifier
   vpc_security_group_ids = [aws_security_group.db_sg.id]
 
-  # values must match your real DB, otherwise Terraform will drift
-  instance_class     = "db.t4g.micro"
+  # UPDATE: Configure these values according to your requirements
+  instance_class     = "db.t4g.micro"  # UPDATE: Choose appropriate instance class
   engine             = "postgres"
-  allocated_storage  = 20
+  allocated_storage  = 20               # UPDATE: Set appropriate storage size
 
   lifecycle {
     prevent_destroy = true
